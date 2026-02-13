@@ -1,0 +1,48 @@
+{% extends 'lms_app/base.html' %}
+
+{% block content %}
+<div class="card">
+    <h2>Quiz: {{ topic }}</h2>
+    <div style="text-align: right; font-weight: bold; margin-bottom: 20px;">
+        Questions: {{ questions|length }}
+    </div>
+
+    <!-- Study Materials Section -->
+    <div class="card" style="background: #fdfdfd; border-top: 5px solid var(--primary-color);">
+        <h3>📖 Quick Study Notes</h3>
+        <div style="line-height: 1.6; color: #444; margin-bottom: 2rem; white-space: pre-line;">
+            {{ notes }}
+        </div>
+
+        {% if video_id %}
+        <h3>🎥 Recommended Video Tutorial</h3>
+        <div
+            style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; height: auto; margin-bottom: 2rem;">
+            <iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 12px;"
+                src="https://www.youtube.com/embed/{{ video_id }}" title="YouTube video player" frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowfullscreen>
+            </iframe>
+        </div>
+        {% endif %}
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        {% for q in questions %}
+        <div class="question-card">
+            <div class="question-text">{{ forloop.counter }}. {{ q.question }}</div>
+            <div class="options">
+                {% for option in q.options %}
+                <label>
+                    <input type="radio" name="{{ q.id }}" value="{{ option }}" required>
+                    {{ option }}
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+        <button type="submit" style="font-size: 1.2rem;">Submit Quiz</button>
+    </form>
+</div>
+{% endblock %}

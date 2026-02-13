@@ -1,0 +1,46 @@
+{% extends 'lms_app/base.html' %}
+
+{% block content %}
+<div class="card">
+    <h2>Welcome to Your Dashboard</h2>
+    <p>Select a topic to start a new quiz (30 questions will be generated).</p>
+
+    <div style="background: #eef2f7; padding: 2rem; border-radius: 8px; margin-bottom: 2rem;">
+        <form method="post" onsubmit="document.getElementById('loader').style.display = 'block';">
+            {% csrf_token %}
+            <div style="display: flex; gap: 10px;">
+                <input type="text" name="topic" placeholder="Enter Quiz Topic (e.g. Python, Space, History)" requried>
+                <button type="submit" style="width: auto;">Start Quiz</button>
+            </div>
+        </form>
+        <div id="loader" class="loading"></div>
+        {% if error %}
+        <div class="alert">{{ error }}</div>
+        {% endif %}
+    </div>
+
+    <h3>Your History</h3>
+    {% if history %}
+    <table>
+        <thead>
+            <tr>
+                <th>Topic</th>
+                <th>Score</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for result in history %}
+            <tr>
+                <td>{{ result.topic }}</td>
+                <td>{{ result.score }} / {{ result.total_questions }}</td>
+                <td>{{ result.date_taken|date:"M d, Y H:i" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No history yet. Take your first quiz!</p>
+    {% endif %}
+</div>
+{% endblock %}
