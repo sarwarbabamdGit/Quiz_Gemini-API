@@ -27,6 +27,7 @@
                 <th>Topic</th>
                 <th>Score</th>
                 <th>Date</th>
+                <th>Action</th>
             </tr>
         </thead>
         <tbody>
@@ -35,6 +36,20 @@
                 <td>{{ result.topic }}</td>
                 <td>{{ result.score }} / {{ result.total_questions }}</td>
                 <td>{{ result.date_taken|date:"M d, Y H:i" }}</td>
+                <td>
+                    {% if result.results_data %}
+                    <a href="{% url 'view_history' result.id %}" style="
+                        background: var(--secondary-color);
+                        color: white;
+                        padding: 5px 12px;
+                        border-radius: 4px;
+                        text-decoration: none;
+                        font-size: 0.9rem;
+                    ">View Review</a>
+                    {% else %}
+                    <span style="color: #999; font-size: 0.8rem;">No Data</span>
+                    {% endif %}
+                </td>
             </tr>
             {% endfor %}
         </tbody>

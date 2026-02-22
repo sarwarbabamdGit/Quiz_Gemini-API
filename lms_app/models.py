@@ -6,6 +6,7 @@ class QuizResult(models.Model):
     topic = models.CharField(max_length=200)
     score = models.IntegerField()
     total_questions = models.IntegerField(default=30)
+    results_data = models.TextField(null=True, blank=True)  # JSON stored as text
     date_taken = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

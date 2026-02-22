@@ -5,6 +5,9 @@
     <h2 style="font-size: 2.5rem; margin-bottom: 1rem;">Quiz Results</h2>
     <div style="font-size: 1.5rem; margin-bottom: 2rem;">
         Topic: <span style="color: var(--primary-color);">{{ topic }}</span>
+        {% if date_taken %}
+        <br><span style="font-size: 1rem; color: #666;">Date Taken: {{ date_taken|date:"M d, Y H:i" }}</span>
+        {% endif %}
     </div>
 
     <div style="
@@ -27,16 +30,75 @@
         You scored <strong>{{ score }}</strong> out of <strong>{{ total }}</strong>.
     </p>
 
-    <a href="{% url 'dashboard' %}" style="
-        display: inline-block;
-        background: var(--primary-color);
-        color: white;
-        padding: 15px 30px;
-        border-radius: 30px;
-        text-decoration: none;
-        font-weight: bold;
-        margin-top: 20px;
-        transition: transform 0.2s;
-    ">Take Another Quiz</a>
+    <div style="margin-top: 3rem; text-align: left;">
+        <h3
+            style="font-size: 2rem; margin-bottom: 2rem; border-bottom: 2px solid var(--secondary-color); padding-bottom: 0.5rem;">
+            Review Your Answers</h3>
+
+        {% for res in results %}
+        <div class="result-item" style="
+            background: #fdfdfd;
+            padding: 1.5rem;
+            border-radius: 15px;
+            margin-bottom: 1.5rem;
+            border: 1px solid #eee;
+            border-left: 5px solid {% if res.is_correct %}#27ae60{% else %}#e74c3c{% endif %};
+            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+        ">
+            <h4 style="margin-bottom: 1.2rem; color: var(--text-color); font-size: 1.1rem; line-height: 1.4;">
+                <span style="color: var(--primary-color); font-weight: bold;">Q{{ forloop.counter }}:
+                </span> {{ res.question }}
+            </h4>
+
+            <div
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 1.2rem;">
+                {% for option in res.options %}
+                <div style="
+                    padding: 12px 15px;
+                    border-radius: 10px;
+                    font-size: 0.95rem;
+                    background: {% if option == res.correct_answer %}rgba(39, 174, 96, 0.1){% elif option == res.user_answer and not res.is_correct %}rgba(231, 76, 60, 0.1){% else %}#f8f9fa{% endif %};
+                    border: 2px solid {% if option == res.correct_answer %}#27ae60{% elif option == res.user_answer and not res.is_correct %}#e74c3c{% else %}#eee{% endif %};
+                    position: relative;
+                ">
+                    {{ option }}
+                    {% if option == res.correct_answer %}
+                    <span
+                        style="color: #27ae60; font-weight: bold; font-size: 0.8rem; display: block; margin-top: 4px;">✓
+                        Correct Answer</span>
+                    {% elif option == res.user_answer and not res.is_correct %}
+                    <span
+                        style="color: #e74c3c; font-weight: bold; font-size: 0.8rem; display: block; margin-top: 4px;">✗
+                        Your Choice</span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+
+            <div
+                style="background: white; padding: 10px 15px; border-radius: 8px; border-left: 3px solid {% if res.is_correct %}#27ae60{% else %}#e74c3c{% endif %}; font-size: 0.9rem;">
+                {% if res.is_correct %}
+                <span style="color: #27ae60; font-weight: 500;">✓ Excellent! Correct answer.</span>
+                {% else %}
+                <span style="color: #e74c3c; font-weight: 500;">✗ Incorrect. The correct answer is
+                    <strong>{{ res.correct_answer }}</strong>.</span>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div style="text-align: center; margin-top: 2rem;">
+        <a href="{% url 'dashboard' %}" style="
+            display: inline-block;
+            background: var(--primary-color);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: transform 0.2s;
+        ">Take Another Quiz</a>
+    </div>
 </div>
 {% endblock %}

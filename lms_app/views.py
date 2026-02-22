@@ -98,24 +98,39 @@ def quiz(request):
     if request.method == 'POST':
         score = 0
         total = len(questions)
+        results = []
         for q in questions:
             user_answer = request.POST.get(str(q['id']))
-            if user_answer == q['answer']:
+            is_correct = user_answer == q['answer']
+            if is_correct:
                 score += 1
+            results.append({
+                'question': q['question'],
+                'options': q['options'],
+                'user_answer': user_answer,
+                'correct_answer': q['answer'],
+                'is_correct': is_correct
+            })
         
         # Save result
         QuizResult.objects.create(
             user=request.user,
             topic=topic,
             score=score,
-            total_questions=total
+            total_questions=total,
+            results_data=json.dumps(results)
         )
         
         # Clear session
         del request.session['quiz_questions']
         del request.session['quiz_topic']
         
-        return render(request, 'lms_app/result.html', {'score': score, 'total': total, 'topic': topic})
+        return render(request, 'lms_app/result.html', {
+            'score': score, 
+            'total': total, 
+            'topic': topic,
+            'results': results
+        })
 
     notes = request.session.get('quiz_notes')
     video_id = request.session.get('quiz_video_id')
@@ -125,4 +140,17 @@ def quiz(request):
         'topic': topic,
         'notes': notes,
         'video_id': video_id
+    })
+
+@login_required
+def view_history(request, result_id):
+    result = QuizResult.objects.get(id=result_id, user=request.user)
+    results = json.loads(result.results_data) if result.results_data else []
+    return render(request, 'lms_app/result.html', {
+        'score': result.score,
+        'total': result.total_questions,
+        'topic': result.topic,
+        'results': results,
+        'date_taken': result.date_taken,
+        'is_review': True
     })
