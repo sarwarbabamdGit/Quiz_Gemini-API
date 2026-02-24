@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -70,8 +71,15 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         h2 {
@@ -82,7 +90,9 @@
             display: inline-block;
         }
 
-        input[type="text"], input[type="password"], input[type="email"] {
+        input[type="text"],
+        input[type="password"],
+        input[type="email"] {
             width: 100%;
             padding: 12px;
             border: 1px solid #ddd;
@@ -93,7 +103,9 @@
             box-sizing: border-box;
         }
 
-        input[type="text"]:focus, input[type="password"]:focus, input[type="email"]:focus {
+        input[type="text"]:focus,
+        input[type="password"]:focus,
+        input[type="email"]:focus {
             border-color: var(--primary-color);
             outline: none;
         }
@@ -123,19 +135,20 @@
             background-color: #ff7675;
             color: white;
         }
-        
+
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 1rem;
         }
-        
-        th, td {
+
+        th,
+        td {
             text-align: left;
             padding: 12px;
             border-bottom: 1px solid #ddd;
         }
-        
+
         th {
             background-color: var(--secondary-color);
             color: white;
@@ -147,10 +160,10 @@
             padding: 1.5rem;
             margin-bottom: 1.5rem;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
             border-left: 4px solid var(--secondary-color);
         }
-        
+
         .question-text {
             font-size: 1.1rem;
             font-weight: 600;
@@ -166,11 +179,11 @@
             cursor: pointer;
             transition: background 0.2s;
         }
-        
+
         .options label:hover {
             background: #e2e6ea;
         }
-        
+
         .options input[type="radio"] {
             margin-right: 10px;
         }
@@ -180,7 +193,7 @@
             text-align: center;
             margin-top: 20px;
         }
-        
+
         .loading::after {
             content: "Generating unique questions...";
             color: var(--primary-color);
@@ -189,22 +202,27 @@
         }
 
         @keyframes blink {
-            50% { opacity: 0.5; }
+            50% {
+                opacity: 0.5;
+            }
         }
-
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true });</script>
 </head>
+
 <body>
     <nav>
         <h1>Smart LMS Quiz</h1>
         <div>
             {% if user.is_authenticated %}
-                <span>Hello, {{ user.username }}</span>
-                <a href="{% url 'dashboard' %}">Dashboard</a>
-                <a href="{% url 'logout' %}">Logout</a>
+            <span>Hello, {{ user.username }}</span>
+            <a href="{% url 'dashboard' %}">Dashboard</a>
+            <a href="{% url 'history_list' %}">History</a>
+            <a href="{% url 'logout' %}">Logout</a>
             {% else %}
-                <a href="{% url 'login' %}">Login</a>
-                <a href="{% url 'register' %}">Register</a>
+            <a href="{% url 'login' %}">Login</a>
+            <a href="{% url 'register' %}">Register</a>
             {% endif %}
         </div>
     </nav>
@@ -213,4 +231,5 @@
         {% block content %}{% endblock %}
     </div>
 </body>
+
 </html>

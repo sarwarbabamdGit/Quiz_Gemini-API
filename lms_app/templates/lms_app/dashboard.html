@@ -8,10 +8,24 @@
     <div style="background: #eef2f7; padding: 2rem; border-radius: 8px; margin-bottom: 2rem;">
         <form method="post" onsubmit="document.getElementById('loader').style.display = 'block';">
             {% csrf_token %}
-            <div style="display: flex; gap: 10px;">
-                <input type="text" name="topic" placeholder="Enter Quiz Topic (e.g. Python, Space, History)" requried>
-                <button type="submit" style="width: auto;">Start Quiz</button>
+            <div style="margin-bottom: 1.5rem;">
+                <input type="text" name="topic" placeholder="Enter Quiz Topic (e.g. Python, Space, History)" required>
             </div>
+
+            <div
+                style="display: flex; gap: 20px; margin-bottom: 1.5rem; background: white; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="radio" name="mode" value="MCQ" checked> <b>30 MCQs Quiz</b>
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="radio" name="mode" value="Notes"> <b>Study Notes Only</b>
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="radio" name="mode" value="Visualization"> <b>Visualization Guide</b>
+                </label>
+            </div>
+
+            <button type="submit">Start Learning</button>
         </form>
         <div id="loader" class="loading"></div>
         {% if error %}
@@ -19,43 +33,38 @@
         {% endif %}
     </div>
 
-    <h3>Your History</h3>
-    {% if history %}
+    <h3>⭐ Your Favorites</h3>
+    {% if favorites %}
     <table>
         <thead>
             <tr>
                 <th>Topic</th>
+                <th>Type</th>
                 <th>Score</th>
                 <th>Date</th>
                 <th>Action</th>
             </tr>
         </thead>
         <tbody>
-            {% for result in history %}
+            {% for result in favorites %}
             <tr>
                 <td>{{ result.topic }}</td>
-                <td>{{ result.score }} / {{ result.total_questions }}</td>
-                <td>{{ result.date_taken|date:"M d, Y H:i" }}</td>
+                <td><span
+                        style="background: #e17055; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem;">
+                        {{result.content_type }}</span></td>
+                <td>{% if result.content_type == 'MCQ' %}{{ result.score }} / {{ result.total_questions }}{% else %}-
+                    {% endif %}</td>
+                <td>{{ result.date_taken|date:"M d, Y" }}</td>
                 <td>
-                    {% if result.results_data %}
-                    <a href="{% url 'view_history' result.id %}" style="
-                        background: var(--secondary-color);
-                        color: white;
-                        padding: 5px 12px;
-                        border-radius: 4px;
-                        text-decoration: none;
-                        font-size: 0.9rem;
-                    ">View Review</a>
-                    {% else %}
-                    <span style="color: #999; font-size: 0.8rem;">No Data</span>
-                    {% endif %}
+                    <a href="{% url 'view_history' result.id %}"
+                        style="background: var(--primary-color); color: white; padding: 4px 10px; border-radius: 4px; text-decoration: none; font-size: 0.8rem;">Open</a>
                 </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
     {% else %}
-    <p>No history yet. Take your first quiz!</p>
+    <p>No favorites yet. Add some from your <a href="{% url 'history_list' %}">Complete History</a>!</p>
     {% endif %}
 </div>
 {% endblock %}

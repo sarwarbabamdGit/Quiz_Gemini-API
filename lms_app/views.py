@@ -44,11 +44,19 @@ def user_logout(request):
 def dashboard(request):
     if request.method == 'POST':
         topic = request.POST.get('topic')
+        mode = request.POST.get('mode', 'MCQ') # MCQ, Notes, Visualization
         if topic:
             try:
-                print(f"Starting quiz generation for topic: {topic}")
+                print(f"Starting {mode} generation for topic: {topic}")
                 model = genai.GenerativeModel('gemini-3-flash-preview')
-                prompt = f'JSON quiz for "{topic}". Output: {{"notes":"summary","questions":[{{"id":1,"question":"?","options":["A","B","C","D"],"answer":"A"}}]}}. 500 words notes, 30 MCQs.'
+                
+                if mode == 'Notes':
+                    prompt = f'Provide comprehensive 1000-word study notes on "{topic}". Output as JSON: {{"notes":"...", "questions":[]}}. JSON only.'
+                elif mode == 'Visualization':
+                    prompt = f'Provide a visual learning guide for "{topic}". Include a Mermaid.js graph/diagram code block. Output as JSON: {{"notes":"# Visual Roadmap\\n```mermaid\\n...\\n```\\nDescription...", "questions":[]}}. JSON only.'
+                else: # MCQ
+                    prompt = f'JSON quiz on "{topic}". 500-word notes + 30 MCQs. Format: {{"notes":"","questions":[{{"id":1,"question":"","options":["","","",""],"answer":""}}]}}. JSON only.'
+                
                 response = model.generate_content(
                     prompt,
                     generation_config={"response_mime_type": "application/json"}
@@ -57,8 +65,6 @@ def dashboard(request):
                 
                 actual_video_id = None
                 try:
-                    # Fetch a real YouTube Video ID for the topic using the Provided API Key
-                    # Adding videoEmbeddable=True and videoSyndicated=True to fix Error 153
                     youtube = build('youtube', 'v3', developerKey=settings.YOUTUBE_API_KEY)
                     request_yt = youtube.search().list(
                         q=f"{topic} official tutorial",
@@ -76,17 +82,49 @@ def dashboard(request):
                     print(f"YouTube Data API failed: {ve}")
                     actual_video_id = None
 
-                request.session['quiz_questions'] = data.get('questions')
+                request.session['quiz_questions'] = data.get('questions', [])
                 request.session['quiz_topic'] = topic
                 request.session['quiz_notes'] = data.get('notes')
                 request.session['quiz_video_id'] = actual_video_id
+                request.session['quiz_mode'] = mode
+                
+                if mode != 'MCQ':
+                    # Directly save and show for Notes/Visualization
+                    result = QuizResult.objects.create(
+                        user=request.user,
+                        topic=topic,
+                        score=0,
+                        total_questions=0,
+                        results_data=data.get('notes'),
+                        content_type=mode
+                    )
+                    return redirect('view_history', result_id=result.id)
+                
                 return redirect('quiz')
             except Exception as e:
-                return render(request, 'lms_app/dashboard.html', {'error': f"Error generating quiz: {str(e)}"})
+                return render(request, 'lms_app/dashboard.html', {'error': f"Error: {str(e)}"})
     
-    # Fetch history
+    # Fetch only favorites for dashboard
+    favorites = QuizResult.objects.filter(user=request.user, is_favorite=True).order_by('-date_taken')
+    return render(request, 'lms_app/dashboard.html', {'favorites': favorites})
+
+@login_required
+def history_list(request):
     history = QuizResult.objects.filter(user=request.user).order_by('-date_taken')
-    return render(request, 'lms_app/dashboard.html', {'history': history})
+    return render(request, 'lms_app/history.html', {'history': history})
+
+@login_required
+def delete_result(request, result_id):
+    result = QuizResult.objects.get(id=result_id, user=request.user)
+    result.delete()
+    return redirect('history_list')
+
+@login_required
+def toggle_favorite(request, result_id):
+    result = QuizResult.objects.get(id=result_id, user=request.user)
+    result.is_favorite = not result.is_favorite
+    result.save()
+    return redirect('history_list')
 
 @login_required
 def quiz(request):
@@ -113,24 +151,27 @@ def quiz(request):
             })
         
         # Save result
-        QuizResult.objects.create(
+        mode = request.session.get('quiz_mode', 'MCQ')
+        try:
+            time_taken = int(request.POST.get('time_taken', 0))
+        except (ValueError, TypeError):
+            time_taken = 0
+        
+        result = QuizResult.objects.create(
             user=request.user,
             topic=topic,
             score=score,
             total_questions=total,
-            results_data=json.dumps(results)
+            results_data=json.dumps(results),
+            content_type=mode,
+            time_taken=time_taken
         )
         
         # Clear session
         del request.session['quiz_questions']
         del request.session['quiz_topic']
         
-        return render(request, 'lms_app/result.html', {
-            'score': score, 
-            'total': total, 
-            'topic': topic,
-            'results': results
-        })
+        return redirect('view_history', result_id=result.id)
 
     notes = request.session.get('quiz_notes')
     video_id = request.session.get('quiz_video_id')
@@ -145,12 +186,25 @@ def quiz(request):
 @login_required
 def view_history(request, result_id):
     result = QuizResult.objects.get(id=result_id, user=request.user)
-    results = json.loads(result.results_data) if result.results_data else []
+    
+    # Handle different content types
+    if result.content_type == 'MCQ':
+        results = json.loads(result.results_data) if result.results_data else []
+        notes_content = None
+    else:
+        results = []
+        notes_content = result.results_data
+        
     return render(request, 'lms_app/result.html', {
         'score': result.score,
         'total': result.total_questions,
         'topic': result.topic,
         'results': results,
         'date_taken': result.date_taken,
-        'is_review': True
+        'time_taken_formatted': f"{result.time_taken // 60}:{result.time_taken % 60:02d}",
+        'is_review': True,
+        'is_favorite': result.is_favorite,
+        'result_id': result.id,
+        'notes': notes_content,
+        'content_type': result.content_type
     })
