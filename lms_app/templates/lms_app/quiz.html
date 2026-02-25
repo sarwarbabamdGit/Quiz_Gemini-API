@@ -119,22 +119,35 @@
         <input type="hidden" name="time_taken" id="time_taken" value="0">
         {% for q in questions %}
         <div class="question-card">
-            <div class="question-text">{{ forloop.counter }}. {{ q.question }}</div>
+            <div class="question-text">
+                <span class="q-number">{{ forloop.counter }}</span>
+                <div>{{ q.question }}</div>
+            </div>
             <div class="options">
                 {% for option in q.options %}
                 <label>
-                    <input type="radio" name="{{ q.id }}" value="{{ option }}">
+                    <input type="radio" name="{{ q.id }}" value="{{ option }}" required>
                     {{ option }}
                 </label>
                 {% endfor %}
             </div>
         </div>
         {% endfor %}
-        <button type="submit" style="font-size: 1.2rem; width: 100%; margin-top: 2rem;">Submit Quiz</button>
+        <button type="submit" style="font-size: 1.2rem; width: 100%; margin-top: 2rem; padding: 18px;">Submit My
+            Quiz</button>
     </form>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // Interactivity for selecting options
+            const labels = document.querySelectorAll('.options label');
+            labels.forEach(label => {
+                label.addEventListener('click', function () {
+                    const parent = this.closest('.options');
+                    parent.querySelectorAll('label').forEach(l => l.classList.remove('selected'));
+                    this.classList.add('selected');
+                });
+            });
             let timeLeft = 25 * 60; // 25 minutes
             let timeTaken = 0;
             const timerDisplay = document.getElementById('timer-display');
