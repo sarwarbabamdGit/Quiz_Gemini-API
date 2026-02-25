@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LMS Quiz App</title>
+    <title>VictoryVault - LMS Quiz App</title>
     <style>
         :root {
             --primary-color: #6c5ce7;
@@ -12,11 +12,11 @@
             --background: #f8f9fa;
             --text-color: #2d3436;
             --card-bg: white;
-            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--background);
             color: var(--text-color);
             margin: 0;
@@ -26,54 +26,141 @@
             min-height: 100vh;
         }
 
+        /* Responsive Navbar */
         nav {
             background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            padding: 1rem 2rem;
+            padding: 0.8rem 1.5rem;
             color: white;
             display: flex;
             justify-content: space-between;
             align-items: center;
             box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
         }
 
-        nav h1 {
-            margin: 0;
+        .nav-logo {
             font-size: 1.5rem;
-        }
-
-        nav a {
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin: 0;
             color: white;
             text-decoration: none;
-            margin-left: 1rem;
-            font-weight: 500;
-            transition: opacity 0.3s;
         }
 
-        nav a:hover {
-            opacity: 0.8;
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-links a:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        /* Mobile Menu Toggle */
+        .menu-toggle {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .menu-toggle span {
+            width: 25px;
+            height: 3px;
+            background-color: white;
+            border-radius: 2px;
+            transition: 0.3s;
+        }
+
+        @media (max-width: 768px) {
+            .menu-toggle {
+                display: flex;
+            }
+
+            .nav-links {
+                display: none;
+                flex-direction: column;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                width: 100%;
+                background: var(--primary-color);
+                padding: 1rem 0;
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+                animation: slideDown 0.3s ease-out;
+            }
+
+            .nav-links.active {
+                display: flex;
+            }
+
+            .nav-links a {
+                padding: 12px 2rem;
+                width: 100%;
+                box-sizing: border-box;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .container {
             flex: 1;
             width: 100%;
-            max-width: 800px;
-            margin: 2rem auto;
+            max-width: 900px;
+            margin: 1.5rem auto;
             padding: 0 1rem;
+            box-sizing: border-box;
         }
 
         .card {
             background: var(--card-bg);
-            border-radius: 12px;
+            border-radius: 15px;
             padding: 2rem;
             box-shadow: var(--shadow);
             animation: fadeIn 0.5s ease-out;
             margin-bottom: 2rem;
         }
 
+        @media (max-width: 480px) {
+            .card {
+                padding: 1.2rem;
+                border-radius: 10px;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+        }
+
         @keyframes fadeIn {
             from {
                 opacity: 0;
-                transform: translateY(20px);
+                transform: translateY(15px);
             }
 
             to {
@@ -87,26 +174,30 @@
             margin-top: 0;
             border-bottom: 2px solid var(--secondary-color);
             padding-bottom: 0.5rem;
-            display: inline-block;
+            margin-bottom: 1.5rem;
         }
 
+        /* Form Controls */
         input[type="text"],
         input[type="password"],
         input[type="email"] {
             width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
+            padding: 14px;
+            border: 1.5px solid #eee;
+            border-radius: 10px;
             margin-bottom: 1rem;
             font-size: 1rem;
-            transition: border-color 0.3s;
+            transition: all 0.3s;
             box-sizing: border-box;
+            background: #fdfdfd;
         }
 
         input[type="text"]:focus,
         input[type="password"]:focus,
         input[type="email"]:focus {
             border-color: var(--primary-color);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(108, 92, 231, 0.1);
             outline: none;
         }
 
@@ -114,112 +205,81 @@
             background-color: var(--primary-color);
             color: white;
             border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
+            padding: 14px 28px;
+            border-radius: 10px;
             cursor: pointer;
             font-size: 1rem;
-            font-weight: 600;
-            transition: transform 0.2s, background-color 0.3s;
+            font-weight: 700;
+            transition: all 0.3s;
             width: 100%;
+            box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3);
         }
 
         button:hover {
             background-color: #5b4cc4;
             transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(108, 92, 231, 0.4);
         }
 
-        .alert {
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-            background-color: #ff7675;
-            color: white;
+        footer {
+            background: white;
+            padding: 2rem 0;
+            text-align: center;
+            border-top: 1px solid #eee;
+            color: #636e72;
+            font-size: 0.9rem;
+            margin-top: 3rem;
+        }
+
+        footer strong {
+            color: var(--primary-color);
+        }
+
+        /* Generic Utilities */
+        .table-responsive {
+            overflow-x: auto;
+            border-radius: 10px;
+            border: 1px solid #eee;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 1rem;
         }
 
         th,
         td {
             text-align: left;
-            padding: 12px;
-            border-bottom: 1px solid #ddd;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
         }
 
         th {
-            background-color: var(--secondary-color);
-            color: white;
-        }
-
-        /* Quiz Specific Styles */
-        .question-card {
-            background: #fff;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-            border-left: 4px solid var(--secondary-color);
-        }
-
-        .question-text {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-        }
-
-        .options label {
-            display: block;
-            padding: 10px;
-            margin: 5px 0;
-            background: #f1f2f6;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .options label:hover {
-            background: #e2e6ea;
-        }
-
-        .options input[type="radio"] {
-            margin-right: 10px;
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        .loading::after {
-            content: "Generating unique questions...";
-            color: var(--primary-color);
-            font-weight: bold;
-            animation: blink 1.5s infinite;
-        }
-
-        @keyframes blink {
-            50% {
-                opacity: 0.5;
-            }
+            background-color: #f8f9fa;
+            color: var(--text-color);
+            font-weight: 700;
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>mermaid.initialize({ startOnLoad: true });</script>
 </head>
 
 <body>
     <nav>
-        <h1>Smart LMS Quiz</h1>
-        <div>
+        <a href="{% url 'dashboard' %}" class="nav-logo">VictoryVault</a>
+        <div class="menu-toggle" id="mobile-menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        <div class="nav-links" id="nav-links">
             {% if user.is_authenticated %}
-            <span>Hello, {{ user.username }}</span>
+            <span style="font-weight: 600; font-size: 0.9rem; opacity: 0.9;">Hi, {{ user.username }}</span>
             <a href="{% url 'dashboard' %}">Dashboard</a>
             <a href="{% url 'history_list' %}">History</a>
-            <a href="{% url 'logout' %}">Logout</a>
+            <a href="{% url 'logout' %}"
+                style="background: rgba(255,255,255,0.2); padding: 5px 15px; border-radius: 20px;">Logout</a>
             {% else %}
             <a href="{% url 'login' %}">Login</a>
             <a href="{% url 'register' %}">Register</a>
@@ -230,6 +290,20 @@
     <div class="container">
         {% block content %}{% endblock %}
     </div>
+
+    <footer>
+        <p>&copy; 2026 - <strong>Mohd Sarwar Babu</strong>. All Rights Reserved.</p>
+        <p style="font-size: 0.8rem; margin-top: 0.5rem; opacity: 0.7;">Empowering your learning journey with
+            VictoryVault.</p>
+    </footer>
+
+    <script>
+        document.getElementById('mobile-menu').addEventListener('click', function () {
+            document.getElementById('nav-links').classList.toggle('active');
+        });
+    </script>
 </body>
+
+</html>
 
 </html>

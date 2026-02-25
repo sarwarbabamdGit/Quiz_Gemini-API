@@ -3,18 +3,20 @@
 {% block content %}
 <div class="card" style="text-align: center;">
     <h2 style="font-size: 2.5rem; margin-bottom: 1rem;">
-        {% if content_type == 'MCQ' %}Quiz Results{% elif content_type == 'Notes' %}Study Notes{% else %}Visualization
-        Guide{% endif %}
+        {% if is_quiz_result %}Quiz Results{% elif content_type == 'Notes' %}Study Notes{% elif content_type == 'Exam'
+        %}Exam Resources{% else %}Visualization Guide{% endif %}
     </h2>
     <div style="font-size: 1.5rem; margin-bottom: 2rem;">
         Topic: <span style="color: var(--primary-color);">{{ topic }}</span>
-        {% if date_taken %}
+        {% if date_taken and is_quiz_result %}
         <br><span style="font-size: 1rem; color: #666;">Date Taken:
             {{ date_taken|date:"M d, Y H:i" }} | Time Spent: {{time_taken_formatted }}</span>
+        {% elif date_taken %}
+        <br><span style="font-size: 1rem; color: #666;">Generated on: {{ date_taken|date:"M d, Y H:i" }}</span>
         {% endif %}
     </div>
 
-    {% if content_type == 'MCQ' %}
+    {% if is_quiz_result %}
     <div
         style="width: 200px; height: 200px; border-radius: 50%; border: 10px solid var(--secondary-color); display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem; font-size: 3rem; font-weight: bold; color: var(--primary-color);">
         {{ score }} / {{ total }}
@@ -61,18 +63,87 @@
                 {% if res.is_correct %}
                 <span style="color: #27ae60; font-weight: 500;">✓ Excellent! Correct answer.</span>
                 {% else %}
-                <span style="color: #e74c3c; font-weight: 500;">✗ Incorrect. The correct answer is <strong>
-                        {{res.correct_answer }}</strong>.</span>
+                <span style="color: #e74c3c; font-weight: 500;">✗ Incorrect. The correct answer is
+                    <strong>{{res.correct_answer }}</strong>.</span>
                 {% endif %}
+                <div style="margin-top: 8px; color: #555; border-top: 1px dashed #eee; padding-top: 8px;">
+                    <strong>Insight:</strong> {{ res.explanation }}
+                </div>
             </div>
         </div>
         {% endfor %}
     </div>
     {% else %}
-    <div
-        style="text-align: left; background: #fdfdfd; padding: 2rem; border-radius: 12px; border: 1px solid #eee; margin-top: 2rem; white-space: pre-line; line-height: 1.8;">
+    <div id="markdown-content"
+        style="text-align: left; background: #fdfdfd; padding: 2rem; border-radius: 12px; border: 1px solid #eee; margin-top: 2rem; line-height: 1.8;">
         {{ notes }}
     </div>
+    <script>
+        // Custom renderer for Mermaid blocks in markdown
+        const renderer = new marked.Renderer();
+        const originCode = renderer.code;
+        renderer.code = function (code, lang, escaped) {
+            if (lang === 'mermaid') {
+                return '<div class="mermaid">' + code + '</div>';
+            }
+            return originCode.call(this, code, lang, escaped);
+        };
+
+        document.getElementById('markdown-content').innerHTML = marked.parse(`{{ notes|escapejs }}`, { renderer: renderer });
+
+        // Initialize mermaid
+        setTimeout(() => {
+            mermaid.init(undefined, ".mermaid");
+        }, 100);
+    </script>
+    <style>
+        #markdown-content h1,
+        #markdown-content h2,
+        #markdown-content h3 {
+            color: var(--primary-color);
+            margin-top: 1.5rem;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+        }
+
+        #markdown-content a {
+            color: #3498db;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        #markdown-content a:hover {
+            text-decoration: underline;
+        }
+
+        #markdown-content table {
+            border: 1px solid #ddd;
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1rem 0;
+        }
+
+        #markdown-content th,
+        #markdown-content td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        #markdown-content th {
+            background: #f8f9fa;
+        }
+
+        .mermaid {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            display: flex;
+            justify-content: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+    </style>
     {% endif %}
 
     <div style="text-align: center; margin-top: 3rem; display: flex; justify-content: center; gap: 15px;">

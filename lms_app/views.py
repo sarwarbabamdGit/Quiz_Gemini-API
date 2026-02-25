@@ -49,13 +49,16 @@ def dashboard(request):
             try:
                 print(f"Starting {mode} generation for topic: {topic}")
                 model = genai.GenerativeModel('gemini-3-flash-preview')
+                # model = genai.GenerativeModel('gemini-3-flash')
                 
-                if mode == 'Notes':
+                if 'exam' in topic.lower():
+                    prompt = f'Provide the latest syllabus, exam pattern, and direct PDF links to the previous 3 year question papers for "{topic}". Also generate 30 previously asked and expected MCQs for the same. For each question, provide a brief explanation for the correct answer. Format: {{"notes":"# Syllabus & Pattern...","questions":[{{"id":1,"question":"","options":["","","",""],"answer":"","explanation":""}}]}}. JSON only.'
+                elif mode == 'Notes':
                     prompt = f'Provide comprehensive 1000-word study notes on "{topic}". Output as JSON: {{"notes":"...", "questions":[]}}. JSON only.'
                 elif mode == 'Visualization':
                     prompt = f'Provide a visual learning guide for "{topic}". Include a Mermaid.js graph/diagram code block. Output as JSON: {{"notes":"# Visual Roadmap\\n```mermaid\\n...\\n```\\nDescription...", "questions":[]}}. JSON only.'
                 else: # MCQ
-                    prompt = f'JSON quiz on "{topic}". 500-word notes + 30 MCQs. Format: {{"notes":"","questions":[{{"id":1,"question":"","options":["","","",""],"answer":""}}]}}. JSON only.'
+                    prompt = f'JSON quiz on "{topic}". Include "Important Points to Remember" in the notes. Generate 30 previously asked and expected MCQs. For each question, provide a brief explanation for the correct answer. Format: {{"notes":"","questions":[{{"id":1,"question":"","options":["","","",""],"answer":"","explanation":""}}]}}. JSON only.'
                 
                 response = model.generate_content(
                     prompt,
@@ -63,44 +66,48 @@ def dashboard(request):
                 )
                 data = json.loads(response.text)
                 
-                actual_video_id = None
+                videos = []
                 try:
                     youtube = build('youtube', 'v3', developerKey=settings.YOUTUBE_API_KEY)
                     request_yt = youtube.search().list(
-                        q=f"{topic} official tutorial",
+                        q=f"{topic} syllabus and paper guide" if mode == 'Exam' else f"{topic} official tutorial",
                         part='snippet',
                         type='video',
                         videoEmbeddable='true',
                         videoSyndicated='true',
-                        maxResults=1
+                        maxResults=3
                     )
                     response_yt = request_yt.execute()
                     
-                    if response_yt.get('items'):
-                        actual_video_id = response_yt['items'][0]['id']['videoId']
+                    for item in response_yt.get('items', []):
+                        videos.append({
+                            'id': item['id']['videoId'],
+                            'title': item['snippet']['title'],
+                            'description': item['snippet']['description'],
+                            'thumbnail': item['snippet']['thumbnails']['high']['url']
+                        })
                 except Exception as ve:
                     print(f"YouTube Data API failed: {ve}")
-                    actual_video_id = None
 
                 request.session['quiz_questions'] = data.get('questions', [])
                 request.session['quiz_topic'] = topic
                 request.session['quiz_notes'] = data.get('notes')
-                request.session['quiz_video_id'] = actual_video_id
+                request.session['quiz_videos'] = videos
                 request.session['quiz_mode'] = mode
                 
-                if mode != 'MCQ':
-                    # Directly save and show for Notes/Visualization
-                    result = QuizResult.objects.create(
-                        user=request.user,
-                        topic=topic,
-                        score=0,
-                        total_questions=0,
-                        results_data=data.get('notes'),
-                        content_type=mode
-                    )
-                    return redirect('view_history', result_id=result.id)
+                if data.get('questions'):
+                    request.session['quiz_mode'] = 'MCQ' if mode == 'MCQ' else mode
+                    return redirect('quiz')
                 
-                return redirect('quiz')
+                result = QuizResult.objects.create(
+                    user=request.user,
+                    topic=topic,
+                    score=0,
+                    total_questions=0,
+                    results_data=data.get('notes'),
+                    content_type=mode
+                )
+                return redirect('view_history', result_id=result.id)
             except Exception as e:
                 return render(request, 'lms_app/dashboard.html', {'error': f"Error: {str(e)}"})
     
@@ -147,7 +154,8 @@ def quiz(request):
                 'options': q['options'],
                 'user_answer': user_answer,
                 'correct_answer': q['answer'],
-                'is_correct': is_correct
+                'is_correct': is_correct,
+                'explanation': q.get('explanation', 'No explanation provided.')
             })
         
         # Save result
@@ -174,37 +182,44 @@ def quiz(request):
         return redirect('view_history', result_id=result.id)
 
     notes = request.session.get('quiz_notes')
-    video_id = request.session.get('quiz_video_id')
+    videos = request.session.get('quiz_videos', [])
 
     return render(request, 'lms_app/quiz.html', {
         'questions': questions, 
         'topic': topic,
         'notes': notes,
-        'video_id': video_id
+        'videos': videos
     })
 
 @login_required
 def view_history(request, result_id):
     result = QuizResult.objects.get(id=result_id, user=request.user)
     
-    # Handle different content types
-    if result.content_type == 'MCQ':
-        results = json.loads(result.results_data) if result.results_data else []
-        notes_content = None
-    else:
-        results = []
+    # Check if the data is a JSON list of results
+    is_quiz_result = False
+    try:
+        results = json.loads(result.results_data)
+        if isinstance(results, list):
+            is_quiz_result = True
+            notes_content = None
+        else:
+            is_quiz_result = False
+            notes_content = result.results_data
+    except:
+        is_quiz_result = False
         notes_content = result.results_data
-        
+
     return render(request, 'lms_app/result.html', {
         'score': result.score,
         'total': result.total_questions,
         'topic': result.topic,
-        'results': results,
+        'results': results if is_quiz_result else [],
         'date_taken': result.date_taken,
         'time_taken_formatted': f"{result.time_taken // 60}:{result.time_taken % 60:02d}",
         'is_review': True,
         'is_favorite': result.is_favorite,
         'result_id': result.id,
         'notes': notes_content,
-        'content_type': result.content_type
+        'content_type': result.content_type,
+        'is_quiz_result': is_quiz_result
     })

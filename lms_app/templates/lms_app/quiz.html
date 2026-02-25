@@ -10,26 +10,107 @@
     <!-- Study Materials Section -->
     <div class="card" style="background: #fdfdfd; border-top: 5px solid var(--primary-color);">
         <h3>📖 Quick Study Notes</h3>
-        <div style="line-height: 1.6; color: #444; margin-bottom: 2rem; white-space: pre-line;">
+        <div id="notes-markdown" style="line-height: 1.6; color: #444; margin-bottom: 2rem;">
             {{ notes }}
         </div>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const notesDiv = document.getElementById('notes-markdown');
+                notesDiv.innerHTML = marked.parse(`{{ notes|escapejs }}`);
+            });
+        </script>
+        <style>
+            #notes-markdown h1,
+            #notes-markdown h2,
+            #notes-markdown h3 {
+                color: var(--primary-color);
+                margin-top: 1.5rem;
+                border-bottom: 1px solid #eee;
+                padding-bottom: 5px;
+            }
 
-        {% if video_id %}
-        <h3>🎥 Recommended Video Tutorial</h3>
+            #notes-markdown ul,
+            #notes-markdown ol {
+                padding-left: 1.5rem;
+                margin-bottom: 1rem;
+            }
+
+            #notes-markdown li {
+                margin-bottom: 0.5rem;
+            }
+
+            #notes-markdown strong {
+                color: #2c3e50;
+            }
+
+            #notes-markdown blockquote {
+                border-left: 4px solid var(--secondary-color);
+                padding-left: 1rem;
+                color: #666;
+                font-style: italic;
+            }
+
+            #notes-markdown code {
+                background: #f0f0f0;
+                padding: 2px 4px;
+                border-radius: 4px;
+                font-family: monospace;
+            }
+        </style>
+
+        {% if videos %}
+        <h3>🎥 Recommended Video Tutorials</h3>
         <div
-            style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; height: auto; margin-bottom: 2rem;">
-            <iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 12px;"
-                src="https://www.youtube.com/embed/{{ video_id }}" title="YouTube video player" frameborder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowfullscreen>
-            </iframe>
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+            {% for video in videos %}
+            <div class="video-card"
+                style="background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08); transition: all 0.3s ease; border: 1px solid #eee;">
+                <a href="https://www.youtube.com/watch?v={{ video.id }}" target="_blank"
+                    style="text-decoration: none; color: inherit;">
+                    <div style="position: relative; overflow: hidden;">
+                        <img src="{{ video.thumbnail }}" alt="{{ video.title }}"
+                            style="width: 100%; height: 180px; object-fit: cover; display: block; transition: transform 0.3s ease;">
+                        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease;"
+                            class="play-overlay">
+                            <span
+                                style="background: #ff0000; color: white; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 0.9rem;">▶
+                                Watch Video</span>
+                        </div>
+                    </div>
+                    <div style="padding: 1rem;">
+                        <h4
+                            style="margin: 0 0 0.5rem 0; font-size: 0.95rem; line-height: 1.4; color: #2c3e50; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                            {{ video.title }}</h4>
+                        <p
+                            style="margin: 0; font-size: 0.8rem; color: #7f8c8d; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+                            {{ video.description }}</p>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
         </div>
+        <style>
+            .video-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+                border-color: var(--primary-color);
+            }
+
+            .video-card:hover .play-overlay {
+                opacity: 1 !important;
+            }
+
+            .video-card:hover img {
+                transform: scale(1.05);
+            }
+        </style>
         {% endif %}
     </div>
 
     <div id="quiz-timer"
         style="position: fixed; top: 100px; right: 20px; background: white; color: var(--primary-color); padding: 15px 25px; border-radius: 15px; font-weight: bold; z-index: 1000; box-shadow: 0 4px 25px rgba(0,0,0,0.1); border: 2px solid var(--primary-color); text-align: center;">
-        <div style="font-size: 0.8rem; text-transform: uppercase; margin-bottom: 5px; opacity: 0.7;">Time Remaining</div>
+        <div style="font-size: 0.8rem; text-transform: uppercase; margin-bottom: 5px; opacity: 0.7;">Time Remaining
+        </div>
         <div id="timer-display" style="font-size: 1.8rem;">25:00</div>
     </div>
 
@@ -52,36 +133,36 @@
         <button type="submit" style="font-size: 1.2rem; width: 100%; margin-top: 2rem;">Submit Quiz</button>
     </form>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        let timeLeft = 25 * 60; // 25 minutes
-        let timeTaken = 0;
-        const timerDisplay = document.getElementById('timer-display');
-        const timeTakenInput = document.getElementById('time_taken');
-        const quizForm = document.getElementById('quiz-form');
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            let timeLeft = 25 * 60; // 25 minutes
+            let timeTaken = 0;
+            const timerDisplay = document.getElementById('timer-display');
+            const timeTakenInput = document.getElementById('time_taken');
+            const quizForm = document.getElementById('quiz-form');
 
-        const timerInterval = setInterval(() => {
-            timeLeft--;
-            timeTaken++;
+            const timerInterval = setInterval(() => {
+                timeLeft--;
+                timeTaken++;
 
-            let minutes = Math.floor(timeLeft / 60);
-            let seconds = timeLeft % 60;
-            timerDisplay.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-            timeTakenInput.value = timeTaken;
+                let minutes = Math.floor(timeLeft / 60);
+                let seconds = timeLeft % 60;
+                timerDisplay.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+                timeTakenInput.value = timeTaken;
 
-            if (timeLeft <= 300) { // Last 5 minutes
-                timerDisplay.style.color = '#e74c3c';
-            }
+                if (timeLeft <= 300) { // Last 5 minutes
+                    timerDisplay.style.color = '#e74c3c';
+                }
 
-            if (timeLeft <= 0) {
-                clearInterval(timerInterval);
-                const inputs = quizForm.querySelectorAll('input[type="radio"]');
-                inputs.forEach(input => input.removeAttribute('required'));
-                alert("Time is up! Your quiz will be submitted automatically.");
-                quizForm.submit();
-            }
-        }, 1000);
-    });
-</script>
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    const inputs = quizForm.querySelectorAll('input[type="radio"]');
+                    inputs.forEach(input => input.removeAttribute('required'));
+                    alert("Time is up! Your quiz will be submitted automatically.");
+                    quizForm.submit();
+                }
+            }, 1000);
+        });
+    </script>
 </div>
 {% endblock %}
