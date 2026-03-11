@@ -1,7 +1,7 @@
 {% extends 'lms_app/base.html' %}
 
 {% block content %}
-<div class="card" style="max-width: 400px; margin: 0 auto;">
+<div class="card">
     <h2>Login</h2>
     <form method="post">
         {% csrf_token %}
@@ -15,7 +15,7 @@
         </div>
         <button type="submit">Login</button>
     </form>
-    <p style="text-align: center; margin-top: 1rem;">
+    <p class="text-center" style="margin-top: 1rem;">
         No account? <a href="{% url 'register' %}" style="color: var(--primary-color);">Register here</a>
     </p>
 </div>
