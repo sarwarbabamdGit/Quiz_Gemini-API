@@ -172,6 +172,11 @@
             box-sizing: border-box;
         }
 
+        /* Modifier for pages that need more horizontal space (tables, dashboards) */
+        .card.card-wide {
+            max-width: 1000px;
+        }
+
         @media (max-width: 480px) {
             .card {
                 padding: 1.5rem;
@@ -245,6 +250,36 @@
             text-align: center;
         }
 
+        /* Badge for status/type labels */
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            color: white;
+            background: #0984e3;
+        }
+
+        /* Actions container and buttons */
+        .actions {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            padding: 4px 10px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 0.8rem;
+            color: white;
+        }
+
+        .action-btn.view { background: var(--primary-color); }
+        .action-btn.favorite { background: #dfe6e9; color: #2d3436; }
+        .action-btn.favorite.favorited { background: #fdcb6e; color: white; }
+        .action-btn.delete { background: #ff7675; }
+
         .table-responsive {
             overflow-x: auto;
             border-radius: 10px;
@@ -254,6 +289,40 @@
         table {
             width: 100%;
             border-collapse: collapse;
+        }
+
+        /* responsive table - stack on small screens */
+        @media (max-width: 600px) {
+            table, thead, tbody, th, td, tr {
+                display: block;
+            }
+            thead tr {
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+            tr {
+                margin-bottom: 1rem;
+            }
+            td {
+                border: none;
+                position: relative;
+                padding-left: 50%;
+            }
+            td:before {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 45%;
+                padding-right: 10px;
+                white-space: nowrap;
+                font-weight: bold;
+            }
+            td:nth-of-type(1):before { content: "Topic"; }
+            td:nth-of-type(2):before { content: "Type"; }
+            td:nth-of-type(3):before { content: "Score"; }
+            td:nth-of-type(4):before { content: "Date"; }
+            td:nth-of-type(5):before { content: "Actions"; }
         }
 
         th,
